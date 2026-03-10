@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+  body { background: #f3f2f1; display: flex; justify-content: center; padding: 16px; }
+  #chat-container { width: 100%; max-width: 700px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 520px; }
+  #chat-header { background: #0078d4; color: white; padding: 14px 18px; border-radius: 8px 8px 0 0; font-weight: 600; font-size: 15px; }
+  #chat-header span { font-weight: 300; font-size: 13px; display: block; opacity: 0.85; }
+  #chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .msg { max-width: 85%; padding: 10px 14px; border-radius: 8px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
+  .msg.user { background: #0078d4; color: white; align-self: flex-end; border-radius: 8px 8px 0 8px; }
+  .msg.bot { background: #f3f2f1; color: #201f1e; align-self: flex-start; border-radius: 8px 8px 8px 0; }
+  .msg.typing { color: #888; font-style: italic; }
+  #chat-input-area { padding: 12px; border-top: 1px solid #e1dfdd; display: flex; gap: 8px; }
+  #chat-input { flex: 1; padding: 10px 14px; border: 1px solid #c8c6c4; border-radius: 6px; font-size: 14px; outline: none; }
+  #chat-input:focus { border-color: #0078d4; }
+  #send-btn { background: #0078d4; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
+  #send-btn:hover { background: #106ebe; }
+  #send-btn:disabled { background: #c8c6c4; cursor: not-allowed; }
+</style>
+</head>
+<body>
+<div id="chat-container">
+  <div id="chat-header">
+    SAP PP Trainer
+    <span>Ask me anything about SAP Production Planning</span>
+  </div>
+  <div id="chat-messages">
+    <div class="msg bot">👋 Hi! I'm your SAP PP Trainer. Ask me about MRP, production orders, tcodes, planning strategies, or anything PP-related.</div>
+  </div>
+  <div id="chat-input-area">
+    <input id="chat-input" type="text" placeholder="e.g. What is MD02? How does MRP work?" />
+    <button id="send-btn" onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<script>
+  const FLOW_URL = "https://default6b1b7a077cf94f3ba5000244004fd8.41.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/fd450e8b5d7d403382d3b327ec8dde83/triggers/manual/paths/invoke?api-version=1";
+
+  document.getElementById('chat-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  async function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const messages = document.getElementById('chat-messages');
+    const btn = document.getElementById('send-btn');
+    const text = input.value.trim();
+    if (!text) return;
+
+    appendMessage(text, 'user');
+    input.value = '';
+    btn.disabled = true;
+
+    const typing = appendMessage('Thinking...', 'bot typing');
+
+    try {
+      const res = await fetch(FLOW_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text })
+      });
+      const data = await res.json();
+      typing.remove();
+      appendMessage(data.response || 'No response received.', 'bot');
+    } catch (err) {
+      typing.remove();
+      appendMessage('Error connecting to the trainer. Please try again.', 'bot');
+    }
+
+    btn.disabled = false;
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function appendMessage(text, type) {
+    const messages = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'msg ' + type;
+    div.textContent = text;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+    return div;
+  }
+</script>
+</body>
+</html>
