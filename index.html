@@ -359,7 +359,7 @@ async function sendMessage(text) {
       })
     });
     const data = await res.json();
-    const raw = (data.content?.[0]?.text || '{}').trim();
+    cconst raw = (data.content?.[0]?.text || JSON.stringify(data)).trim();[0]?.text || '{}').trim();
     history.push({ role: 'assistant', content: raw });
     removeTyping();
 
