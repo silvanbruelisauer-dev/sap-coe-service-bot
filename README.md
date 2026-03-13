@@ -1,1 +1,1 @@
-# sap-pp-trainer
+# sap-coe-service-bot
